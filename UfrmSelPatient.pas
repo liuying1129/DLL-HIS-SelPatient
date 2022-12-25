@@ -66,7 +66,6 @@ type
     { Private declarations }
     procedure UpdateMyQuery1;
     procedure ClearEdit;
-    function InsertTreatMaster(const APatient_Unid:integer):integer;
     procedure LoadGroupName(const comboBox:TcomboBox;const ASel:string);
     function ScalarSQLCmd(AServer:string;APort:integer;ADataBase:string;AUserName:string;APassword:string;ASQL:string):string;
   public
@@ -325,15 +324,11 @@ begin
 end;
 
 procedure TfrmSelPatient.DBGrid1DblClick(Sender: TObject);
-var
-  Unid_TreatMaster:integer;
 begin
   if not (Sender as TDBGrid).DataSource.DataSet.Active then exit;
   if (Sender as TDBGrid).DataSource.DataSet.RecordCount<=0 then exit;
 
-  Unid_TreatMaster:=InsertTreatMaster((Sender as TDBGrid).DataSource.DataSet.fieldbyname('unid').AsInteger);
-
-  FResult:='{"success":true,"method":"insert","unid":'+inttostr(Unid_TreatMaster)+'}';
+  FResult:='{"success":true,"method":"selected","patient_unid":'+(Sender as TDBGrid).DataSource.DataSet.fieldbyname('unid').AsString+'}';
 
   close;
 end;
@@ -382,66 +377,6 @@ begin
   LabeledEdit12.Clear;
   LabeledEdit13.Clear;
   LabeledEdit14.Clear;  
-end;
-
-function TfrmSelPatient.InsertTreatMaster(const APatient_Unid:integer):integer;
-var
-  adotemp11,adotemp22:TMyQuery;
-  sqlstr:string;
-begin
-  Result:=-1;
-  
-  adotemp22:=TMyQuery.Create(nil);
-  adotemp22.Connection:=MyConnection1;
-  adotemp22.Close;
-  adotemp22.SQL.Clear;
-  adotemp22.SQL.Text:='select TIMESTAMPDIFF(YEAR,patient_birthday,CURDATE()) as patient_age,pi.* from patient_info pi where unid='+inttostr(APatient_Unid);
-  adotemp22.Open;
-  if adotemp22.RecordCount<>1 then begin adotemp22.Free;exit;end;
-
-  adotemp11:=TMyQuery.Create(nil);
-  adotemp11.Connection:=MyConnection1;
-
-  sqlstr:='Insert into treat_master ('+
-                      ' patient_unid, patient_name, patient_sex, patient_age, certificate_type, certificate_num, clinic_card_num, health_care_num, address, work_company, work_address, if_marry, native_place, telephone, operator, department) values ('+
-                      ':patient_unid,:patient_name,:patient_sex,:patient_age,:certificate_type,:certificate_num,:clinic_card_num,:health_care_num,:address,:work_company,:work_address,:if_marry,:native_place,:telephone,:operator,:department) ';
-  adotemp11.Close;
-  adotemp11.SQL.Clear;
-  adotemp11.SQL.Add(sqlstr);
-  //执行多条MySQL语句，要用分号分隔
-  adotemp11.SQL.Add('; SELECT LAST_INSERT_ID() AS Insert_Identity ');
-  adotemp11.ParamByName('patient_unid').Value:=APatient_Unid;
-  adotemp11.ParamByName('patient_name').Value:=adotemp22.fieldbyname('patient_name').AsString;
-  adotemp11.ParamByName('patient_sex').Value:=adotemp22.fieldbyname('patient_sex').AsString;
-  adotemp11.ParamByName('patient_age').Value:=adotemp22.fieldbyname('patient_age').AsString;
-  adotemp11.ParamByName('certificate_type').Value:=adotemp22.fieldbyname('certificate_type').AsString;
-  adotemp11.ParamByName('certificate_num').Value:=adotemp22.fieldbyname('certificate_num').AsString;
-  adotemp11.ParamByName('clinic_card_num').Value:=adotemp22.fieldbyname('clinic_card_num').AsString;
-  adotemp11.ParamByName('health_care_num').Value:=adotemp22.fieldbyname('health_care_num').AsString;
-  adotemp11.ParamByName('address').Value:=adotemp22.fieldbyname('address').AsString;
-  adotemp11.ParamByName('work_company').Value:=adotemp22.fieldbyname('work_company').AsString;
-  adotemp11.ParamByName('work_address').Value:=adotemp22.fieldbyname('work_address').AsString;
-  adotemp11.ParamByName('if_marry').Value:=adotemp22.fieldbyname('if_marry').AsString;
-  adotemp11.ParamByName('native_place').Value:=adotemp22.fieldbyname('native_place').AsString;
-  adotemp11.ParamByName('telephone').Value:=adotemp22.fieldbyname('telephone').AsString;
-  adotemp11.ParamByName('operator').Value:=FOperator;
-  adotemp11.ParamByName('department').Value:=FOperatorDep;
-  try
-    adotemp11.ExecSQL;
-  except
-    on E:Exception do
-    begin
-      adotemp11.Free;
-      adotemp22.Free;
-      MESSAGEDLG('新增诊疗记录失败!'+E.Message,mtError,[mbOK],0);
-      exit;
-    end;
-  end;
-
-  Result:=adotemp11.fieldbyname('Insert_Identity').AsInteger;
-  adotemp11.Free;
-
-  adotemp22.Free;
 end;
 
 procedure TfrmSelPatient.ComboBox3KeyDown(Sender: TObject; var Key: Word;

@@ -277,9 +277,9 @@ object frmSelPatient: TfrmSelPatient
       object Label6: TLabel
         Left = 374
         Top = 32
-        Width = 274
+        Width = 124
         Height = 13
-        Caption = #27880':'#21452#20987#24739#32773','#23558#20026#35813#24739#32773#29983#25104#19968#26465#26032#30340#23601#35786#35760#24405
+        Caption = #27880':'#21452#20987#24739#32773#36827#34892#36873#25321
         Font.Charset = ANSI_CHARSET
         Font.Color = clBlue
         Font.Height = -13
