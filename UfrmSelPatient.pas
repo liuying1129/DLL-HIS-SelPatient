@@ -5,8 +5,8 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, ExtCtrls, Grids, DBGrids, StdCtrls, DB, MemDS, DBAccess,
-  MyAccess, Buttons, DosMove, StrUtils, ComCtrls,DateUtils, Menus,
-  ADOLYGetcode;
+  Buttons, DosMove, StrUtils, ComCtrls,DateUtils, Menus,
+  ADOLYGetcode, Uni, UniProvider, MySQLUniProvider;
 
 type
   TfrmSelPatient = class(TForm)
@@ -24,7 +24,7 @@ type
     LabeledEdit13: TLabeledEdit;
     LabeledEdit14: TLabeledEdit;
     DataSource1: TDataSource;
-    MyQuery1: TMyQuery;
+    MyQuery1: TUniQuery;
     BitBtn1: TBitBtn;
     DosMove1: TDosMove;
     DateTimePicker1: TDateTimePicker;
@@ -44,7 +44,7 @@ type
     Label5: TLabel;
     LabeledEdit2: TLabeledEdit;
     Label6: TLabel;
-    MyConnection1: TMyConnection;
+    MyConnection1: TUniConnection;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure LabeledEdit1KeyDown(Sender: TObject; var Key: Word;
@@ -67,14 +67,10 @@ type
     procedure UpdateMyQuery1;
     procedure ClearEdit;
     procedure LoadGroupName(const comboBox:TcomboBox;const ASel:string);
-    function ScalarSQLCmd(AServer:string;APort:integer;ADataBase:string;AUserName:string;APassword:string;ASQL:string):string;
+    function ScalarSQLCmd(AHisConn:string;ASQL:string):string;
   public
     { Public declarations }
-    FServer:String;
-    FPort:Integer;
-    FDatabase:String;
-    FUsername:String;
-    FPassword:String;
+    FHisConn:String;
     FOperator:String;
     FOperatorDep:String;
     FResult:String;
@@ -98,13 +94,7 @@ begin
   try
     MyConnection1.Connected := false;
     MyConnection1.LoginPrompt:=false;
-    //使用gb2312,插入【焗】时报错.改为gbk解决
-    MyConnection1.Options.Charset:='gbk';
-    MyConnection1.Server:=FServer;
-    MyConnection1.Port:=FPort;
-    MyConnection1.Database:=FDatabase;
-    MyConnection1.Username:=FUsername;
-    MyConnection1.Password:=FPassword;
+    MyConnection1.ConnectString:=FHisConn;
     MyConnection1.Connected := true;
   except
     on E:Exception do
@@ -202,7 +192,7 @@ end;
 
 procedure TfrmSelPatient.BitBtn1Click(Sender: TObject);
 var
-  adotemp11,adotemp12:TMyQuery;
+  adotemp11,adotemp12:TUniQuery;
   sqlstr:string;
   iUnid{,Unid_TreatMaster}:integer;
 begin
@@ -220,7 +210,7 @@ begin
     
     iUnid:=MyQuery1.fieldbyname('unid').AsInteger;
 
-    adotemp12:=TMyQuery.Create(nil);
+    adotemp12:=TUniQuery.Create(nil);
     adotemp12.Connection:=MyConnection1;
 
     adotemp12.Close;
@@ -255,7 +245,7 @@ begin
     FResult:='{"success":true,"method":"update"}';
   end else
   begin
-    adotemp11:=TMyQuery.Create(nil);
+    adotemp11:=TUniQuery.Create(nil);
     adotemp11.Connection:=MyConnection1;
 
     sqlstr:='Insert into patient_info ('+
@@ -340,7 +330,7 @@ begin
 
   if (MessageDlg('确实要删除该患者吗？',mtWarning,[mbYes,mbNo],0)<>mrYes) then exit;
 
-  if strtoint(ScalarSQLCmd(FServer,FPort,FDatabase,FUsername,FPassword,'select count(*) from treat_master where patient_unid='+MyQuery1.fieldbyname('unid').AsString))>=1 then
+  if strtoint(ScalarSQLCmd(FHisConn,'select count(*) from treat_master where patient_unid='+MyQuery1.fieldbyname('unid').AsString))>=1 then
   begin
     MESSAGEDLG('该患者存在诊疗记录,不允许删除!',mtError,[mbOK],0);
     exit;
@@ -445,10 +435,10 @@ end;
 procedure TfrmSelPatient.LoadGroupName(const comboBox: TcomboBox;
   const ASel: string);
 var
-  adotemp3:TMyQuery;
+  adotemp3:TUniQuery;
   tempstr:string;
 begin
-     adotemp3:=TMyQuery.Create(nil);
+     adotemp3:=TUniQuery.Create(nil);
      adotemp3.Connection:=MyConnection1;
      adotemp3.Close;
      adotemp3.SQL.Clear;
@@ -468,22 +458,16 @@ begin
      adotemp3.Free;
 end;
 
-function TfrmSelPatient.ScalarSQLCmd(AServer: string; APort: integer;
-  ADataBase, AUserName, APassword, ASQL: string): string;
+function TfrmSelPatient.ScalarSQLCmd(AHisConn, ASQL: string): string;
 var
-  Conn:TMyConnection;
-  Qry:TMyQuery;
+  Conn:TUniConnection;
+  Qry:TUniQuery;
 begin
   Result:='';
-  Conn:=TMyConnection.Create(nil);
+  Conn:=TUniConnection.Create(nil);
   Conn.LoginPrompt:=false;
-  Conn.Options.Charset:='gbk';
-  Conn.Server:=AServer;
-  Conn.Port:=APort;
-  Conn.Database:=ADataBase;
-  Conn.Username:=AUserName;
-  Conn.Password:=APassword;
-  Qry:=TMyQuery.Create(nil);
+  Conn.ConnectString:=AHisConn;
+  Qry:=TUniQuery.Create(nil);
   Qry.Connection:=Conn;
   Qry.Close;
   Qry.SQL.Clear;

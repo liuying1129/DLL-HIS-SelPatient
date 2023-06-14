@@ -313,7 +313,7 @@ object frmSelPatient: TfrmSelPatient
     Left = 313
     Top = 136
   end
-  object MyQuery1: TMyQuery
+  object MyQuery1: TUniQuery
     AfterOpen = MyQuery1AfterOpen
     Left = 281
     Top = 136
@@ -339,7 +339,7 @@ object frmSelPatient: TfrmSelPatient
       OnClick = N3Click
     end
   end
-  object MyConnection1: TMyConnection
+  object MyConnection1: TUniConnection
     Left = 249
     Top = 136
   end

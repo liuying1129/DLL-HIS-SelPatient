@@ -14,13 +14,13 @@ uses
   SysUtils,
   Classes,
   Forms,
-  MyAccess{TMyQuery},
+  Uni,
   Dialogs{MessageDlg},
   UfrmSelPatient in 'UfrmSelPatient.pas' {frmSelPatient};
 
 {$R *.res}
 
-function ShowPatientForm(AHandle:THandle;AServer:Pchar;APort:Integer;ADatabase:Pchar;AUsername:Pchar;APassword:Pchar;AOperator:Pchar;AOperatorDep:Pchar):PChar;stdcall;
+function ShowPatientForm(AHandle:THandle;AHisConn:Pchar;AOperator:Pchar;AOperatorDep:Pchar):PChar;stdcall;
 var
   ffrmSelPatient: TfrmSelPatient;
   OldApplication : TApplication;
@@ -30,11 +30,7 @@ begin
   OldApplication.Handle := Application.Handle; 
   Application.Handle:=AHandle;
   ffrmSelPatient:=TfrmSelPatient.Create(nil);
-  ffrmSelPatient.FServer:=StrPas(AServer);
-  ffrmSelPatient.FPort:=APort;
-  ffrmSelPatient.FDatabase:=StrPas(ADatabase);
-  ffrmSelPatient.FUsername:=StrPas(AUsername);
-  ffrmSelPatient.FPassword:=StrPas(APassword);
+  ffrmSelPatient.FHisConn:=StrPas(AHisConn);
   ffrmSelPatient.FOperator:=StrPas(AOperator);
   ffrmSelPatient.FOperatorDep:=StrPas(AOperatorDep);
   try
@@ -60,24 +56,19 @@ begin
   end;
 end;
 
-function InsertTreatMaster(AServer:Pchar;APort:Integer;ADatabase:Pchar;AUsername:Pchar;APassword:Pchar;APatient_Unid:integer;AOperator:PChar;ADepartment:PChar;ARegister_Src:PChar;ARegister_Treat_Date:TDateTime;ARegister_Morning_Afternoon:PChar;ARegister_No_Type:PChar;ARegister_Operator:PChar):integer;stdcall;
+function InsertTreatMaster(AHisConn:Pchar;APatient_Unid:integer;AOperator:PChar;ADepartment:PChar;ARegister_Src:PChar;ARegister_Treat_Date:TDateTime;ARegister_Morning_Afternoon:PChar;ARegister_No_Type:PChar;ARegister_Operator:PChar):integer;stdcall;
 var
-  Conn:TMyConnection;
-  adotemp11,adotemp22:TMyQuery;
+  Conn:TUniConnection;
+  adotemp11,adotemp22:TUniQuery;
   sqlstr:string;
 begin
   Result:=-1;
   
-  Conn:=TMyConnection.Create(nil);
+  Conn:=TUniConnection.Create(nil);
   Conn.LoginPrompt:=false;
-  Conn.Options.Charset:='gbk';
-  Conn.Server:=AServer;
-  Conn.Port:=APort;
-  Conn.Database:=ADataBase;
-  Conn.Username:=AUserName;
-  Conn.Password:=APassword;
+  Conn.ConnectString:=AHisConn;
 
-  adotemp22:=TMyQuery.Create(nil);
+  adotemp22:=TUniQuery.Create(nil);
   adotemp22.Connection:=Conn;
   adotemp22.Close;
   adotemp22.SQL.Clear;
@@ -85,7 +76,7 @@ begin
   adotemp22.Open;
   if adotemp22.RecordCount<>1 then begin adotemp22.Free;Conn.Free;exit;end;
 
-  adotemp11:=TMyQuery.Create(nil);
+  adotemp11:=TUniQuery.Create(nil);
   adotemp11.Connection:=Conn;
 
   sqlstr:='Insert into treat_master ('+
